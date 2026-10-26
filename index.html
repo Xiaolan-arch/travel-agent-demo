@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>云途旅行社 · 智能客服中心</title>
+<style>
+:root{
+  --brand:#0e7490; --brand-2:#0ea5a5; --brand-dark:#155e75;
+  --accent:#f59e0b; --ok:#16a34a; --warn:#dc2626;
+  --bg:#f4f7fb; --card:#ffffff; --line:#e5eaf1;
+  --txt:#1f2937; --sub:#6b7280;
+  --shadow:0 6px 24px rgba(16,42,67,.08);
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;
+  background:var(--bg); color:var(--txt); font-size:15px; line-height:1.7;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 18px 60px}
+
+/* header */
+.hero{
+  position:relative;height:210px;overflow:hidden;
+  background:linear-gradient(120deg,#0e7490,#0ea5a5 60%,#155e75);
+}
+.hero img{width:100%;height:100%;object-fit:cover;opacity:.42;display:block}
+.hero .overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+  padding:0 40px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.35);
+}
+.hero h1{margin:0;font-size:30px;letter-spacing:1px}
+.hero p{margin:6px 0 0;opacity:.9;font-size:14px}
+.hero .badges{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.hero .badges span{
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
+  padding:2px 10px;border-radius:999px;font-size:12px;backdrop-filter:blur(4px)
+}
+
+/* tabs */
+.tabs{
+  display:flex;gap:6px;background:var(--card);border-radius:var(--radius);
+  padding:6px;box-shadow:var(--shadow);margin:-28px 0 24px;position:relative;z-index:3;
+  flex-wrap:wrap;
+}
+.tabs button{
+  flex:1;min-width:110px;border:0;background:transparent;padding:11px 12px;border-radius:11px;
+  font-size:15px;color:var(--sub);cursor:pointer;font-family:inherit;transition:.18s;
+}
+.tabs button:hover{background:#f1f6fa;color:var(--brand-dark)}
+.tabs button.on{background:linear-gradient(120deg,var(--brand),var(--brand-2));color:#fff;box-shadow:0 4px 14px rgba(14,116,144,.28)}
+
+.panel{display:none}
+.panel.on{display:block;animation:fade .28s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.card+.card{margin-top:18px}
+.card h2{margin:0 0 4px;font-size:18px}
+.card .desc{color:var(--sub);font-size:13px;margin:0 0 16px}
+
+/* chat layout */
+.chat-grid{display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start}
+@media(max-width:880px){.chat-grid{grid-template-columns:1fr}}
+
+.chat-card{display:flex;flex-direction:column;height:640px;padding:0;overflow:hidden}
+.chat-head{
+  padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;
+  background:linear-gradient(90deg,#f8fbfd,#fff);
+}
+.avatar{
+  width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;font-size:18px;
+  background:linear-gradient(135deg,var(--brand),var(--brand-2));flex:none;
+}
+.chat-head .who{font-weight:600}
+.chat-head .st{font-size:12px;color:var(--sub);display:flex;align-items:center;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block}
+.chat-head .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.mini{font-size:12px;color:var(--sub);display:flex;align-items:center;gap:4px;cursor:pointer;user-select:none}
+
+.msgs{flex:1;overflow-y:auto;padding:18px;background:#fafcfe}
+.msg{display:flex;gap:10px;margin-bottom:16px;align-items:flex-start}
+.msg .b{
+  max-width:78%;padding:11px 14px;border-radius:14px;font-size:14.5px;white-space:pre-wrap;word-break:break-word;
+}
+.msg.bot .b{background:#fff;border:1px solid var(--line);border-top-left-radius:4px;box-shadow:0 2px 8px rgba(16,42,67,.05)}
+.msg.me{flex-direction:row-reverse}
+.msg.me .b{background:linear-gradient(120deg,var(--brand),var(--brand-2));color:#fff;border-top-right-radius:4px}
+.msg .ava{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;font-size:15px}
+.msg.bot .ava{background:#e6f4f7}
+.msg.me .ava{background:#dbeafe}
+.msg .b .hl{color:var(--warn);font-weight:600}
+.msg .b .tag{display:inline-block;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;border-radius:6px;padding:0 6px;font-size:12px;margin-right:4px}
+
+.chips{padding:10px 14px 0;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);background:#fff}
+.chip{
+  border:1px solid #d7e3ec;background:#f7fbfd;color:#0f5f76;border-radius:999px;
+  padding:5px 12px;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.15s
+}
+.chip:hover{background:#e6f4f7;border-color:#9fd0dd}
+
+.inputbar{display:flex;gap:10px;padding:12px 14px;background:#fff;border-top:1px solid var(--line)}
+.inputbar input{
+  flex:1;border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:14.5px;font-family:inherit;outline:none;
+}
+.inputbar input:focus{border-color:var(--brand-2);box-shadow:0 0 0 3px rgba(14,165,165,.12)}
+.inputbar button{
+  border:0;border-radius:12px;padding:0 20px;background:linear-gradient(120deg,var(--brand),var(--brand-2));
+  color:#fff;font-size:14.5px;cursor:pointer;font-family:inherit;
+}
+.inputbar button:disabled{opacity:.5;cursor:not-allowed}
+
+/* slots */
+.slot-list{display:flex;flex-direction:column;gap:8px;margin:10px 0 0}
+.slot{display:flex;align-items:center;gap:10px;font-size:13.5px}
+.slot .k{width:74px;color:var(--sub);flex:none}
+.slot .v{flex:1;color:#9aa4b2}
+.slot .v.filled{color:var(--brand-dark);font-weight:600}
+.slot .ok{color:var(--ok);font-weight:700}
+.bar{height:6px;background:#eef2f7;border-radius:99px;overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand-2));transition:.35s}
+
+/* routes */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:18px}
+.route{border-radius:var(--radius);overflow:hidden;background:var(--card);box-shadow:var(--shadow);display:flex;flex-direction:column}
+.route .pic{height:150px;position:relative;background:#dbe7ee}
+.route .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.route .st{
+  position:absolute;top:10px;left:10px;font-size:12px;padding:3px 10px;border-radius:999px;color:#fff;
+}
+.route .st.on-sale{background:rgba(22,163,74,.92)}
+.route .st.off-sale{background:rgba(120,130,145,.92)}
+.route .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.route h3{margin:0;font-size:16px}
+.route .price{color:var(--warn);font-weight:700;font-size:16px}
+.route .price small{color:var(--sub);font-weight:400;font-size:12px}
+.route .kv{font-size:13px;color:var(--sub);display:flex;gap:6px}
+.route .kv b{color:#374151;font-weight:600;flex:none}
+.route .acts{display:flex;gap:8px;margin-top:auto;padding-top:10px}
+.btn{
+  border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font-size:13px;
+  cursor:pointer;font-family:inherit;color:#374151;transition:.15s
+}
+.btn:hover{border-color:#b9d6e2;background:#f6fbfd}
+.btn.primary{background:linear-gradient(120deg,var(--brand),var(--brand-2));border:0;color:#fff}
+.btn.danger{color:var(--warn);border-color:#f3c9c9}
+.btn.danger:hover{background:#fef4f4}
+.btn.sm{padding:4px 9px;font-size:12.5px;border-radius:8px}
+
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.sec-head h2{margin:0;font-size:18px}
+.sec-head .desc{margin:0;color:var(--sub);font-size:13px}
+.sec-head .right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+/* table */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:#f8fbfd;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat .n{font-size:22px;font-weight:700;color:var(--brand-dark)}
+.stat .l{font-size:12.5px;color:var(--sub)}
+
+.filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.filters button{
+  border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 16px;font-size:13.5px;
+  color:var(--sub);cursor:pointer;font-family:inherit;transition:.15s
+}
+.filters button.on{background:#0e7490;color:#fff;border-color:#0e7490}
+.filters button span{opacity:.75;font-size:12px;margin-left:4px}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:860px}
+th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:#f8fbfd;color:#4b5563;font-weight:600;font-size:13px}
+tr:last-child td{border-bottom:0}
+td.note{max-width:190px;white-space:normal;color:var(--sub)}
+.badge{font-size:12px;padding:2px 9px;border-radius:999px;display:inline-block}
+.badge.a{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+.badge.b{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+.badge.c{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
+select.st-sel{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-family:inherit;font-size:12.5px;background:#fff}
+.empty{padding:34px;text-align:center;color:var(--sub);font-size:14px}
+
+/* modal */
+.mask{position:fixed;inset:0;background:rgba(15,30,45,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.mask.on{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal .mh{padding:18px 22px 10px;font-size:17px;font-weight:600}
+.modal .mb{padding:0 22px 6px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal .mb .full{grid-column:1/-1}
+.field label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:4px}
+.field input,.field textarea,.field select{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;outline:none
+}
+.field input:focus,.field textarea:focus{border-color:var(--brand-2)}
+.field textarea{min-height:64px;resize:vertical}
+.modal .mf{padding:16px 22px 20px;display:flex;gap:10px;justify-content:flex-end}
+.hint{font-size:12px;color:var(--sub);padding:0 22px 8px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <img src="images/hero.jpg" alt="">
+  <div class="overlay">
+    <h1>云途旅行社 · 智能客服中心</h1>
+    <p>线路咨询 · 报价说明 · 意向登记，一站式线上服务</p>
+    <div class="badges">
+      <span>线路状态自动识别</span><span>价格以人工核实为准</span><span>退费按条款执行</span><span>信息自动录入意向表</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <nav class="tabs">
+    <button class="on" data-tab="chat">💬 智能客服</button>
+    <button data-tab="routes">🗺️ 线路中心</button>
+    <button data-tab="leads">📋 意向登记表</button>
+    <button data-tab="rules">📖 系统规则</button>
+  </nav>
+
+  <!-- ============ 智能客服 ============ -->
+  <section class="panel on" id="p-chat">
+    <div class="chat-grid">
+      <div class="card chat-card">
+        <div class="chat-head">
+          <div class="avatar">🧭</div>
+          <div>
+            <div class="who">小途 · 线上咨询客服</div>
+            <div class="st"><i class="dot"></i><span id="engine-label">本地规则引擎</span></div>
+          </div>
+          <div class="right">
+            <label class="mini" title="长者模式：回复更简短并语音播报"><input type="checkbox" id="elder"> 长者模式</label>
+            <button class="btn sm" id="btn-settings">⚙ 设置</button>
+          </div>
+        </div>
+        <div class="msgs" id="msgs"></div>
+        <div class="chips" id="chips"></div>
+        <div class="inputbar">
+          <input id="inp" placeholder="输入您想咨询的线路或问题，例如：三峡五日游多少钱？" autocomplete="off">
+          <button id="send">发送</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>客户信息收集</h2>
+        <p class="desc">按系统规则收集 5 项信息，集齐后自动录入意向表单</p>
+        <div class="slot-list">
+          <div class="slot"><span class="k">客户姓名</span><span class="v" id="s-name">待收集</span></div>
+          <div class="slot"><span class="k">联系手机号</span><span class="v" id="s-phone">待收集</span></div>
+          <div class="slot"><span class="k">意向线路</span><span class="v" id="s-route">待收集</span></div>
+          <div class="slot"><span class="k">出行人数</span><span class="v" id="s-count">待收集</span></div>
+          <div class="slot"><span class="k">出行时间</span><span class="v" id="s-date">待收集</span></div>
+        </div>
+        <div class="bar"><i id="slot-bar"></i></div>
+        <div style="margin-top:14px;display:flex;gap:8px">
+          <button class="btn sm" id="btn-reset-slots">清空</button>
+          <button class="btn sm" id="btn-to-leads">查看意向表 →</button>
+        </div>
+        <p class="desc" style="margin-top:16px;border-top:1px dashed var(--line);padding-top:12px">
+          <b>对接人员</b><br>王顾问 · 023-8888-6666 / 138-0000-8888
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 线路中心 ============ -->
+  <section class="panel" id="p-routes">
+    <div class="card">
+      <div class="sec-head">
+        <h2>在售线路</h2>
+        <p class="desc">一条线路一份资料，可单独上架 / 下架（下架可恢复）</p>
+        <div class="right">
+          <button class="btn primary" id="btn-new-route">＋ 新增线路</button>
+        </div>
+      </div>
+      <div class="grid" id="route-grid"></div>
+    </div>
+  </section>
+
+  <!-- ============ 意向登记表 ============ -->
+  <section class="panel" id="p-leads">
+    <div class="card">
+      <div class="sec-head">
+        <h2>客户意向登记表</h2>
+        <div class="right">
+          <button class="btn" id="btn-add-lead">＋ 手动新增</button>
+          <button class="btn" id="btn-export">导出 CSV</button>
+        </div>
+      </div>
+
+      <div class="stats" id="lead-stats"></div>
+
+      <div class="filters" id="lead-filters">
+        <button data-view="有意向" class="on">有意向 <span id="c-有意向"></span></button>
+        <button data-view="待处理">待处理 <span id="c-待处理"></span></button>
+        <button data-view="已完成">已完成 <span id="c-已完成"></span></button>
+        <button data-view="全部">总表格 <span id="c-全部"></span></button>
+      </div>
+
+      <div class="tblwrap">
+        <table>
+          <thead>
+            <tr>
+              <th>客户姓名</th><th>联系手机号</th><th>意向线路</th><th>出行人数</th>
+              <th>计划出行日期</th><th>备注信息</th><th>业务状态</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="lead-body"></tbody>
+        </table>
+      </div>
+      <p class="desc" style="margin-top:12px">数据保存在本机浏览器中（localStorage），可随时导出 CSV 交给内勤。</p>
+    </div>
+  </section>
+
+  <!-- ============ 系统规则 ============ -->
+  <section class="panel" id="p-rules">
+    <div class="card">
+      <h2>客服系统规则（对话依据）</h2>
+      <p class="desc">以下规则来自《系统提示词 / 系统规则》，本页客服的每一条回复均遵循此规则。</p>
+      <ol id="rules-list" style="padding-left:20px;margin:0"></ol>
+    </div>
+    <div class="card">
+      <h2>线路资料模板</h2>
+      <p class="desc">新增线路时按此格式填写，线路状态决定客服回复方式。</p>
+      <pre style="background:#f8fbfd;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-size:13px;line-height:1.8;margin:0" id="tpl-box"></pre>
+    </div>
+  </section>
+</div>
+
+<!-- 线路编辑弹窗 -->
+<div class="mask" id="mask-route">
+  <div class="modal">
+    <div class="mh" id="route-modal-title">新增线路</div>
+    <div class="mb" id="route-form"></div>
+    <div class="mf">
+      <button class="btn" id="route-cancel">取消</button>
+      <button class="btn primary" id="route-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="mask" id="mask-settings">
+  <div class="modal">
+    <div class="mh">接入大模型（可选）</div>
+    <p class="hint">不填写则使用内置规则引擎作答（推荐，稳定、无需联网）。填写后将调用 OpenAI 兼容接口，由大模型按系统提示词作答；若浏览器跨域受限会自动回退到规则引擎。</p>
+    <div class="mb">
+      <div class="field full"><label>接口地址 Base URL</label><input id="cfg-url" placeholder="https://api.deepseek.com/v1"></div>
+      <div class="field full"><label>API Key</label><input id="cfg-key" placeholder="sk-..." type="password"></div>
+      <div class="field full"><label>模型名称</label><input id="cfg-model" placeholder="deepseek-chat"></div>
+    </div>
+    <div class="mf">
+      <button class="btn" id="cfg-cancel">取消</button>
+      <button class="btn primary" id="cfg-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   1. 基础工具
+   ========================================================================= */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+const CONTACT = { advisor: '王顾问', tel: '023-8888-6666', mobile: '138-0000-8888' };
+
+const FALLBACK = '抱歉，我这边没有查到相关的线路信息。为了不耽误您，我先帮您登记一下联系方式，稍后让销售同事给您推荐合适的线路。请问怎么称呼您，方便留个手机号吗？';
+const OFF_SALE_1 = '这条线路目前已经停售不再收客啦，我帮您登记联系方式，销售可以给您推荐同类型还在报名的线路。';
+const PRICE_TIP = '提示：价格随团期、年龄、房型、节假日浮动，最终准确报价请联系销售核实。';
+
+/* =========================================================================
+   2. 线路数据（可按【线路资料模板】替换 / 在“线路中心”里维护）
+   ========================================================================= */
+const ROUTES_SEED = [
+  {
+    id: 'r1', name: '重庆三峡5日游', status: '在售',
+    aliases: ['三峡', '长江三峡', '重庆三峡', '游轮', '邮轮'],
+    price: '2980-3680元/人',
+    departures: '2026年3月12日、3月26日、4月9日（团位实时变动）',
+    age: '28-70周岁，70岁以上需由直系亲属陪同并签署健康承诺书',
+    hotel: '双人标间，四星级游轮客房，2人一间；单人报名会产生单房差，单房差请咨询销售',
+    transport: '高铁往返 + 当地空调旅游大巴 + 长江豪华游轮',
+    tickets: '含三峡大坝、白帝城、小三峡、丰都鬼城首道门票；不含景区观光车、索道、个人消费',
+    meals: '含4早7正餐，团队桌餐，不吃不退餐费',
+    shopping: '无强制购物，有自愿参观的特产展厅，不强制消费',
+    refund: ['出发前7天及以上取消：扣除已产生的预订损失费，剩余可退',
+             '出发前3~6天取消：扣除订单总额20%',
+             '出发前1~2天取消：扣除订单总额50%',
+             '出发当日取消：大部分资源已预定，无法全额退款'],
+    note: '长途线路，不建议严重高血压、心脏病患者报名',
+    img: 'images/sanxia.jpg'
+  },
+  {
+    id: 'r2', name: '云南昆大丽6日游', status: '在售',
+    aliases: ['云南', '昆明', '大理', '丽江', '昆大丽', '玉龙雪山', '雪山'],
+    price: '3580-4280元/人',
+    departures: '2026年3月8日、3月18日、4月2日（团位实时变动）',
+    age: '25-68周岁，68岁以上需健康证明',
+    hotel: '双人标间，当地四星酒店 + 1晚丽江特色客栈，2人一间；单房差咨询销售',
+    transport: '飞机往返 + 当地空调旅游大巴',
+    tickets: '含石林、玉龙雪山（含大索道）、大理洱海游船、丽江古城门票；不含氧气瓶、羽绒服租赁',
+    meals: '含5早8正餐，团队桌餐，不吃不退餐费',
+    shopping: '无强制购物，有自愿参观的翡翠与茶叶展厅，不强制消费',
+    refund: ['出发前7天及以上取消：扣除已产生的预订损失费，剩余可退',
+             '出发前3~6天取消：扣除订单总额25%',
+             '出发前1~2天取消：扣除订单总额55%',
+             '出发当日取消：机票及酒店已出票预订，无法全额退款'],
+    note: '高原线路，请注意防晒与高反，不建议孕妇及严重心肺疾病人群报名',
+    img: 'images/yunnan.jpg'
+  },
+  {
+    id: 'r3', name: '张家界凤凰古城4日游', status: '在售',
+    aliases: ['张家界', '凤凰', '凤凰古城', '玻璃栈道', '天门山'],
+    price: '2380-2880元/人',
+    departures: '2026年3月15日、3月29日、4月12日（团位实时变动）',
+    age: '20-70周岁，70岁以上需健康承诺书',
+    hotel: '双人标间，当地三星酒店 + 1晚凤凰古城客栈，2人一间；单房差咨询销售',
+    transport: '高铁往返 + 当地空调旅游大巴',
+    tickets: '含张家界国家森林公园、天门山、玻璃栈道、凤凰古城门票；不含景区索道、观光电梯、个人消费',
+    meals: '含3早6正餐，团队桌餐，不吃不退餐费',
+    shopping: '无强制购物',
+    refund: ['出发前7天及以上取消：扣除已产生的预订损失费，剩余可退',
+             '出发前3~6天取消：扣除订单总额20%',
+             '出发前1~2天取消：扣除订单总额45%',
+             '出发当日取消：资源已预定，无法全额退款'],
+    note: '山路台阶较多，体力要求较高，不建议膝关节严重不适人群报名',
+    img: 'images/zhangjiajie.jpg'
+  },
+  {
+    id: 'r4', name: '华东五市7日游', status: '已下架',
+    aliases: ['华东', '上海', '苏州', '杭州', '南京', '无锡', '五市', '江南'],
+    price: '（已下架，不提供报价）',
+    departures: '—', age: '—', hotel: '—', transport: '—', tickets: '—', meals: '—', shopping: '—', refund: [], note: '本线路往季产品，已停售',
+    img: 'images/huadong.jpg'
+  }
+];
+
+const LEADS_SEED = [
+  { id: 'l1', name: '李秀兰', phone: '13800138001', route: '重庆三峡5日游', count: 2, date: '2026-03-12', note: '两位老人，有高血压，需下铺', status: '有意向' },
+  { id: 'l2', name: '张建国', phone: '13900139002', route: '云南昆大丽6日游', count: 4, date: '2026-04-02', note: '带一名 9 岁儿童', status: '待处理' },
+  { id: 'l3', name: '陈美玲', phone: '13700137003', route: '张家界凤凰古城4日游', count: 2, date: '2026-03-15', note: '', status: '已完成' }
+];
+
+const RULES = [
+  '识别用户询问的线路名称，检索知识库对应文档，优先读取文档内【线路状态】。状态=在售时正常回答；状态=已下架时禁止报价与介绍行程，使用下架专用话术。',
+  '价格只展示文档内的参考区间，每次必须提醒：价格随团期、年龄、房型、节假日变动，最终报价以旅行社销售人工核实为准。',
+  '退费只复述该线路文档写好的退改条款，不额外承诺特殊退款，退款审核由内勤人工判定。',
+  '老年客户提问，回答简短通俗，句子简短，适配语音朗读。',
+  '收集客户信息：姓名、联系手机号、意向线路、出行人数、出行时间；信息收集完成后录入意向表单，并打上标签：有意向 / 待处理 / 已完成。',
+  '知识库检索不到内容时，直接使用兜底话术，不编造任何行程与价格信息，并登记客户电话转人工。',
+  '客户索要联系方式时，推送旅行社对接人员电话。'
+];
+
+const TEMPLATE = `# 线路名称：【例：重庆三峡5日游】
+线路状态：【在售 / 已下架】
+1、参考价格区间：XXX元/人
+   提示：价格随团期、年龄、房型、节假日浮动，最终准确报价请联系销售核实
+2、可选团期：XXXX年XX月XX日、XXXX年XX月XX日，团位实时变动
+3、年龄限制：例：28-70周岁，70岁以上需健康承诺书
+4、住宿标准：双人标间，X级酒店，2人一间；单人报名会产生单房差
+5、交通方式：大巴/高铁/飞机
+6、行程包含门票：XXX、XXX景区门票；不含景区观光车、索道、个人消费
+7、餐食包含：含X早餐X正餐，团队桌餐，不吃不退餐费
+8、购物说明：无强制购物 / 有自愿参观特产展厅，不强制消费
+9、退改退费规则：
+   出发前7天及以上取消：扣除预订损失费，剩余可退
+   出发前3~6天取消：扣除订单总额XX%
+   出发前1~2天取消：扣除订单总额XX%
+   出发当日取消：大部分资源已预定，无法全额退款
+   *退费最终由旅行社内勤人工审核
+10、线路备注：例：长途，不建议严重高血压人群报名`;
+
+/* =========================================================================
+   3. 状态
+   ========================================================================= */
+let routes = LS.get('ly_routes', null) || JSON.parse(JSON.stringify(ROUTES_SEED));
+let leads = LS.get('ly_leads', null) || JSON.parse(JSON.stringify(LEADS_SEED));
+let leadView = '有意向';
+let collector = { name: '', phone: '', route: '', count: '', date: '' };
+let cfg = LS.get('ly_cfg', { url: '', key: '', model: '' });
+let lastRoute = null;
+
+const saveRoutes = () => LS.set('ly_routes', routes);
+const saveLeads = () => LS.set('ly_leads', leads);
+const saveCfg = () => LS.set('ly_cfg', cfg);
+
+/* =========================================================================
+   4. 规则引擎
+   ========================================================================= */
+const INTENTS = [
+  { key: 'refund',   re: /(退费|退款|退改|退团|取消|改期|不去了)/ },
+  { key: 'price',    re: /(价格|多少钱|费用|报价|多钱|多少元|贵不贵|预算|人均)/ },
+  { key: 'depart',   re: /(团期|出发|哪天|什么时候|时间|日期|班期|几号)/ },
+  { key: 'age',      re: /(年龄|多大|岁数|周岁|年纪|限制)/ },
+  { key: 'hotel',    re: /(住宿|酒店|房型|标间|几人间|单房差|客栈)/ },
+  { key: 'transport',re: /(怎么去|交通|大巴|高铁|飞机|机票|火车|车程)/ },
+  { key: 'tickets',  re: /(门票|景点|包含什么|含哪些|景区|自费)/ },
+  { key: 'meals',    re: /(餐食|吃饭|吃什么|早餐|正餐|几点吃)/ },
+  { key: 'shopping', re: /(购物|特产|强制|自费店)/ },
+  { key: 'contact',  re: /(电话|联系方式|怎么联系|客服电话|微信|人工|销售)/ },
+  { key: 'signup',   re: /(报名|怎么报|预定|预订|下单|怎么订|参团)/ },
+  { key: 'elder',    re: /(老人|老年|年纪大|父母|爸妈|爷爷|奶奶|外公|外婆|退休)/ }
+];
+
+function matchRoute(text) {
+  const t = text.toLowerCase();
+  let best = null, bestLen = 0;
+  for (const r of routes) {
+    const keys = [r.name, ...(r.aliases || [])];
+    for (const k of keys) {
+      if (!k) continue;
+      if (t.includes(String(k).toLowerCase()) && String(k).length > bestLen) { best = r; bestLen = String(k).length; }
+    }
+  }
+  return best;
+}
+function detectIntent(text) {
+  for (const it of INTENTS) if (it.re.test(text)) return it.key;
+  return null;
+}
+function extractSlots(text) {
+  const out = {};
+  const phone = text.match(/(?<!\d)(1[3-9]\d{9})(?!\d)/);
+  if (phone) out.phone = phone[1];
+  const nameM = text.match(/(?:我叫|我是|我姓|姓名[是：:]?|叫我)\s*([\u4e00-\u9fa5]{2,4})/);
+  if (nameM) out.name = nameM[1];
+  const cnt = text.match(/(\d{1,2})\s*(?:个人|人|位|名)/);
+  if (cnt) out.count = Number(cnt[1]);
+  const dateM = text.match(/(\d{4}\s*[-\/年]\s*\d{1,2}\s*[-\/月]\s*\d{1,2}\s*[日号]?)|(\d{1,2}\s*月\s*\d{1,2}\s*[日号])|(\d{1,2}\s*[日号]\s*出发)|(下周[一二三四五六日天]?|下个月|月底|月初|五一|十一|国庆|春节|寒假|暑假|清明|端午)/);
+  if (dateM) out.date = dateM[0].replace(/\s/g, '');
+  return out;
+}
+
+const SLOT_META = [
+  ['name',  '客户姓名',   '请问怎么称呼您呢？'],
+  ['phone', '联系手机号', '方便留一下您的手机号吗？（11 位）'],
+  ['route', '意向线路',   '您想了解哪条线路呢？'],
+  ['count', '出行人数',   '您这边一共几位出行？'],
+  ['date',  '出行时间',   '计划什么时候出发呢？']
+];
+const filledCount = () => SLOT_META.filter(([k]) => collector[k]).length;
+function nextAsk() {
+  const miss = SLOT_META.find(([k]) => !collector[k]);
+  return miss ? miss[2] : '';
+}
+
+function routeFullHTML(r) {
+  const lines = [];
+  lines.push(`<span class="tag">在售</span><b>${esc(r.name)}</b>`);
+  lines.push(`参考价格区间：${esc(r.price)}`);
+  lines.push(`<span class="hl">${PRICE_TIP}</span>`);
+  lines.push(`可选团期：${esc(r.departures)}`);
+  lines.push(`年龄限制：${esc(r.age)}`);
+  lines.push(`住宿标准：${esc(r.hotel)}`);
+  lines.push(`交通方式：${esc(r.transport)}`);
+  lines.push(`行程包含门票：${esc(r.tickets)}`);
+  lines.push(`餐食包含：${esc(r.meals)}`);
+  lines.push(`购物说明：${esc(r.shopping)}`);
+  if (r.refund && r.refund.length) {
+    lines.push('退改退费规则：\n' + r.refund.map(x => '· ' + esc(x)).join('\n'));
+    lines.push('*退费最终由旅行社内勤人工审核');
+  }
+  if (r.note) lines.push(`线路备注：${esc(r.note)}`);
+  return lines.join('\n');
+}
+function routeFieldHTML(r, intent) {
+  switch (intent) {
+    case 'price': return `<span class="tag">在售</span><b>${esc(r.name)}</b>\n参考价格区间：${esc(r.price)}\n<span class="hl">${PRICE_TIP}</span>`;
+    case 'depart': return `<span class="tag">在售</span><b>${esc(r.name)}</b>\n可选团期：${esc(r.departures)}`;
+    case 'age': return `<span class="tag">在售</span><b>${esc(r.name)}</b>\n年龄限制：${esc(r.age)}`;
+    case 'hotel': return `<span class="tag">在售</span><b>${esc(r.name)}</b>\n住宿标准：${esc(r.hotel)}`;
+    case 'transport': return `<span class="tag">在售</span><b>${esc(r.name)}</b>\n交通方式：${esc(r.transport)}`;
+    case 'tickets': return `<span class="tag">在售</span><b>${esc(r.name)}</b>\n行程包含门票：${esc(r.tickets)}`;
+    case 'meals': return `<span class="tag">在售</span><b>${esc(r.name)}</b>\n餐食包含：${esc(r.meals)}`;
+    case 'shopping': return `<span class="tag">在售</span><b>${esc(r.name)}</b>\n购物说明：${esc(r.shopping)}`;
+    case 'refund': return `<span class="tag">在售</span><b>${esc(r.name)}</b>\n退改退费规则：\n${r.refund.map(x => '· ' + esc(x)).join('\n')}\n*退费最终由旅行社内勤人工审核`;
+    default: return routeFullHTML(r);
+  }
+}
+
+/* 核心问答 */
+function answer(text) {
+  const raw = String(text || '').trim();
+  const s = extractSlots(raw);
+  if (s.phone) collector.phone = s.phone;
+  if (s.name) collector.name = s.name;
+  if (s.count) collector.count = s.count;
+  if (s.date) collector.date = s.date;
+
+  const route = matchRoute(raw);
+  if (route) { lastRoute = route; collector.route = route.name; }
+  const intent = detectIntent(raw);
+  const elder = $('#elder').checked || intent === 'elder';
+
+  // 联系方式
+  if (intent === 'contact') {
+    return { text: `旅行社对接人员：${CONTACT.advisor}\n座机 ${CONTACT.tel}\n手机 ${CONTACT.mobile}\n工作时间 09:00-18:00，您也可以留下手机号，我们会主动联系您。` + tail('') };
+  }
+
+  // 线路已下架
+  if (route && route.status === '已下架') {
+    return { text: `${OFF_SALE_1}` + tail(nextAsk()) };
+  }
+
+  // 命中线路 + 在售
+  if (route) {
+    let body = routeFieldHTML(route, intent);
+    const ask = nextAsk();
+    if (ask) body += `\n\n${ask}`;
+    else body += `\n\n信息已收集齐全，我这就帮您录入意向表单，稍后销售会与您联系。`;
+    return { text: body };
+  }
+
+  // 未命中线路
+  if (intent && intent !== 'elder') {
+    const onSale = routes.filter(r => r.status === '在售');
+    const names = onSale.map(r => `<b>${esc(r.name)}</b>`).join('、') || '（暂无在售线路）';
+    return { text: `请问您想了解哪条线路呢？我们目前在售的有：${names}。\n也可以直接回复线路名称，我把详细行程发您。\n\n${nextAsk() || ''}`.trim() };
+  }
+
+  // 问候
+  if (/(你好|您好|在吗|hi|hello|哈喽|有人吗|咨询)/i.test(raw)) {
+    const onSale = routes.filter(r => r.status === '在售').map(r => `<b>${esc(r.name)}</b>`).join('、');
+    return { text: `您好，我是云途旅行社的智能客服小途。\n目前在售线路：${onSale}。\n您可以问我线路的价格、团期、年龄限制、住宿、退改规则等，也可以直接说“我想报名”，我帮您登记。\n\n${nextAsk()}` };
+  }
+
+  // 兜底
+  return { text: FALLBACK + tail(nextAsk()) };
+}
+function tail(ask) {
+  return `\n\n如不方便回复，也可以直接致电 ${CONTACT.tel}（${CONTACT.advisor}）。` + (ask ? `\n${ask}` : '');
+}
+
+/* =========================================================================
+   5. 聊天 UI
+   ========================================================================= */
+const msgs = $('#msgs');
+function pushMsg(who, html) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  div.innerHTML = who === 'bot'
+    ? `<div class="ava">🧭</div><div class="b">${html}</div>`
+    : `<div class="ava">🙂</div><div class="b">${esc(html)}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function pushTyping() {
+  const div = document.createElement('div');
+  div.className = 'msg bot'; div.id = 'typing';
+  div.innerHTML = `<div class="ava">🧭</div><div class="b">正在查询线路资料…</div>`;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+function popTyping() { const t = $('#typing'); if (t) t.remove(); }
+
+function speak(text) {
+  if (!$('#elder').checked || !('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g, '').replace(/·/g, '，'));
+    u.lang = 'zh-CN'; u.rate = 0.92; speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+function elderTrim(html) {
+  if (!$('#elder').checked) return html;
+  // 长者模式：只保留关键信息，句子更短
+  const lines = html.split('\n');
+  const keep = lines.filter(l => /(价格|团期|年龄|住宿|报名|退费|出发前|已停售|电话)/.test(l));
+  const out = (keep.length ? keep : lines).join('\n');
+  return out.replace(/提示：/g, '').replace(/（.*?）/g, '');
+}
+
+async function send() {
+  const inp = $('#inp');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  pushMsg('me', text);
+  pushTyping();
+
+  let html;
+  if (cfg.key && cfg.url && cfg.model) {
+    html = await callLLM(text);
+  } else {
+    await new Promise(r => setTimeout(r, 260));
+    html = '<span class="tag">规则引擎</span>\n' + answer(text).text;
+  }
+  popTyping();
+  html = elderTrim(html);
+  pushMsg('bot', html);
+  speak(html);
+  renderSlots();
+  autoSaveLead();
+}
+
+async function callLLM(text) {
+  const url = cfg.url.replace(/\/$/, '') + '/chat/completions';
+  const sys = `你是旅行社线上咨询智能客服。以下是线路资料：\n` +
+    routes.map(r => `【${r.name}】线路状态：${r.status}；参考价格区间：${r.price}；团期：${r.departures}；年龄限制：${r.age}；住宿：${r.hotel}；交通：${r.transport}；门票：${r.tickets}；餐食：${r.meals}；购物：${r.shopping}；退改：${(r.refund || []).join(' / ')}；备注：${r.note}`).join('\n') +
+    `\n\n必须遵守的规则：\n` + RULES.map((x, i) => `${i + 1}. ${x}`).join('\n') +
+    `\n\n对接人员：${CONTACT.advisor}，座机 ${CONTACT.tel}，手机 ${CONTACT.mobile}。\n当前已收集的客户信息：${JSON.stringify(collector)}（缺失项请主动询问）。\n回答要口语化、简短，适合语音朗读。`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key },
+      body: JSON.stringify({ model: cfg.model, temperature: 0.3, messages: [{ role: 'system', content: sys }, { role: 'user', content: text }] })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) throw new Error('空响应');
+    return '<span class="tag">大模型</span>\n' + esc(content).replace(/\n/g, '\n');
+  } catch (e) {
+    return '<span class="tag">规则引擎</span>' + `（大模型调用失败：${esc(e.message)}，已回退）\n` + answer(text).text;
+  }
+}
+
+/* =========================================================================
+   6. 信息收集面板
+   ========================================================================= */
+function renderSlots() {
+  SLOT_META.forEach(([k, label]) => {
+    const el = $('#s-' + k);
+    const v = collector[k];
+    el.textContent = v ? String(v) : '待收集';
+    el.className = 'v' + (v ? ' filled' : '');
+  });
+  $('#slot-bar').style.width = (filledCount() / SLOT_META.length * 100) + '%';
+}
+
+let autoSaved = false;
+function autoSaveLead() {
+  if (filledCount() < 5) { autoSaved = false; return; }
+  if (autoSaved) return;
+  const dup = leads.some(l => l.phone === collector.phone && l.route === collector.route);
+  if (dup) return;
+  leads.unshift({
+    id: 'l' + Date.now(),
+    name: collector.name, phone: collector.phone, route: collector.route,
+    count: collector.count, date: collector.date, note: '客服对话自动录入',
+    status: '有意向'
+  });
+  saveLeads(); renderLeads();
+  autoSaved = true;
+  pushMsg('bot', `<span class="tag">已录入</span>已把您登记到【意向登记表】，状态：<b>有意向</b>。销售会尽快联系您，也可以直接致电 ${CONTACT.tel}。`);
+  renderSlots();
+}
+
+/* =========================================================================
+   7. 线路中心
+   ========================================================================= */
+function renderRoutes() {
+  const grid = $('#route-grid');
+  if (!routes.length) { grid.innerHTML = '<div class="empty">暂无线路，点击右上角“新增线路”录入。</div>'; return; }
+  grid.innerHTML = routes.map(r => `
+    <div class="route">
+      <div class="pic">
+        <img src="${esc(r.img || '')}" alt="${esc(r.name)}" loading="lazy">
+        <span class="st ${r.status === '在售' ? 'on-sale' : 'off-sale'}">${esc(r.status)}</span>
+      </div>
+      <div class="body">
+        <h3>${esc(r.name)}</h3>
+        <div class="price">${esc(r.price)} <small>参考区间</small></div>
+        <div class="kv"><b>团期</b><span>${esc(r.departures)}</span></div>
+        <div class="kv"><b>年龄</b><span>${esc(r.age)}</span></div>
+        <div class="acts">
+          <button class="btn sm" data-ask="${esc(r.name)}">问客服</button>
+          <button class="btn sm" data-edit="${r.id}">编辑</button>
+          <button class="btn sm" data-toggle="${r.id}">${r.status === '在售' ? '下架' : '恢复上架'}</button>
+          <button class="btn sm danger" data-del="${r.id}">删除</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+$('#route-grid').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.ask) { switchTab('chat'); $('#inp').value = b.dataset.ask + ' 多少钱？'; send(); return; }
+  if (b.dataset.edit) { openRouteModal(routes.find(r => r.id === b.dataset.edit)); return; }
+  if (b.dataset.toggle) {
+    const r = routes.find(x => x.id === b.dataset.toggle);
+    r.status = r.status === '在售' ? '已下架' : '在售';
+    saveRoutes(); renderRoutes();
+    return;
+  }
+  if (b.dataset.del) {
+    const r = routes.find(x => x.id === b.dataset.del);
+    if (confirm(`确定永久删除线路「${r.name}」？删除后客服将不再读取该线路资料。`)) {
+      routes = routes.filter(x => x.id !== r.id); saveRoutes(); renderRoutes();
+    }
+  }
+});
+
+const RFIELDS = [
+  ['name', '线路名称', 'text', 'full'],
+  ['status', '线路状态', 'select', ''],
+  ['price', '参考价格区间', 'text', ''],
+  ['departures', '可选团期', 'text', 'full'],
+  ['age', '年龄限制', 'text', 'full'],
+  ['hotel', '住宿标准', 'text', 'full'],
+  ['transport', '交通方式', 'text', ''],
+  ['tickets', '行程包含门票', 'text', 'full'],
+  ['meals', '餐食包含', 'text', ''],
+  ['shopping', '购物说明', 'text', ''],
+  ['note', '线路备注', 'textarea', 'full'],
+  ['refundText', '退改退费规则（每行一条）', 'textarea', 'full']
+];
+let editingId = null;
+function openRouteModal(r) {
+  editingId = r ? r.id : null;
+  $('#route-modal-title').textContent = r ? '编辑线路' : '新增线路';
+  $('#route-form').innerHTML = RFIELDS.map(([k, label, type, cls]) => {
+    if (type === 'select') {
+      return `<div class="field ${cls}"><label>${label}</label><select id="rf-${k}">
+        <option ${r && r.status === '在售' ? 'selected' : ''}>在售</option>
+        <option ${r && r.status === '已下架' ? 'selected' : ''}>已下架</option></select></div>`;
+    }
+    const val = k === 'refundText' ? ((r && r.refund) || []).join('\n') : (r ? (r[k] || '') : '');
+    return type === 'textarea'
+      ? `<div class="field ${cls}"><label>${label}</label><textarea id="rf-${k}">${esc(val)}</textarea></div>`
+      : `<div class="field ${cls}"><label>${label}</label><input id="rf-${k}" value="${esc(val)}"></div>`;
+  }).join('');
+  $('#mask-route').classList.add('on');
+}
+$('#route-cancel').onclick = () => $('#mask-route').classList.remove('on');
+$('#btn-new-route').onclick = () => openRouteModal(null);
+$('#route-save').onclick = () => {
+  const get = k => ($('#rf-' + k)?.value || '').trim();
+  const name = get('name');
+  if (!name) { alert('请填写线路名称'); return; }
+  const obj = {
+    id: editingId || ('r' + Date.now()),
+    name, status: get('status') || '在售',
+    aliases: [], price: get('price'), departures: get('departures'), age: get('age'),
+    hotel: get('hotel'), transport: get('transport'), tickets: get('tickets'),
+    meals: get('meals'), shopping: get('shopping'), note: get('note'),
+    refund: get('refundText').split('\n').map(x => x.trim()).filter(Boolean),
+    img: (editingId && routes.find(x => x.id === editingId)?.img) || ROUTES_SEED[0].img
+  };
+  if (editingId) routes = routes.map(r => r.id === editingId ? Object.assign(r, obj) : r);
+  else routes.push(obj);
+  saveRoutes(); renderRoutes(); $('#mask-route').classList.remove('on');
+};
+
+/* =========================================================================
+   8. 意向登记表
+   ========================================================================= */
+const badgeCls = s => s === '有意向' ? 'a' : s === '待处理' ? 'b' : 'c';
+function renderLeads() {
+  const counts = { '有意向': 0, '待处理': 0, '已完成': 0 };
+  leads.forEach(l => counts[l.status] = (counts[l.status] || 0) + 1);
+  Object.keys(counts).forEach(k => { const el = $('#c-' + k); if (el) el.textContent = counts[k]; });
+  $('#c-全部').textContent = leads.length;
+
+  // 统计条
+  const totalPeople = leads.reduce((a, l) => a + (Number(l.count) || 0), 0);
+  const routeRank = {};
+  leads.forEach(l => { routeRank[l.route] = (routeRank[l.route] || 0) + 1; });
+  const top = Object.entries(routeRank).sort((a, b) => b[1] - a[1])[0];
+  $('#lead-stats').innerHTML = `
+    <div class="stat"><div class="n">${leads.length}</div><div class="l">意向总数</div></div>
+    <div class="stat"><div class="n" style="color:#c2410c">${counts['有意向'] || 0}</div><div class="l">有意向（待跟进）</div></div>
+    <div class="stat"><div class="n" style="color:#1d4ed8">${counts['待处理'] || 0}</div><div class="l">待处理</div></div>
+    <div class="stat"><div class="n" style="color:#047857">${counts['已完成'] || 0}</div><div class="l">已完成</div></div>
+    <div class="stat"><div class="n">${totalPeople}</div><div class="l">合计出行人数</div></div>
+    <div class="stat"><div class="n" style="font-size:15px;line-height:1.6;padding-top:5px">${top ? esc(top[0]) : '—'}</div><div class="l">最热门线路${top ? `（${top[1]}条）` : ''}</div></div>`;
+
+  const list = leadView === '全部' ? leads : leads.filter(l => l.status === leadView);
+  const body = $('#lead-body');
+  if (!list.length) {
+    body.innerHTML = `<tr><td colspan="8"><div class="empty">该视图暂无数据</div></td></tr>`;
+    return;
+  }
+  body.innerHTML = list.map(l => `
+    <tr>
+      <td>${esc(l.name)}</td>
+      <td>${esc(l.phone)}</td>
+      <td>${esc(l.route)}</td>
+      <td>${esc(l.count)} 人</td>
+      <td>${esc(l.date || '—')}</td>
+      <td class="note">${esc(l.note || '—')}</td>
+      <td><select class="st-sel" data-status="${l.id}">
+        ${['有意向', '待处理', '已完成'].map(s => `<option ${l.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+      </select></td>
+      <td><button class="btn sm danger" data-del-lead="${l.id}">删除</button></td>
+    </tr>`).join('');
+}
+
+$('#lead-body').addEventListener('click', e => {
+  const b = e.target.closest('button[data-del-lead]'); if (!b) return;
+  leads = leads.filter(l => l.id !== b.dataset.delLead); saveLeads(); renderLeads();
+});
+$('#lead-body').addEventListener('change', e => {
+  const s = e.target.closest('select[data-status]'); if (!s) return;
+  const l = leads.find(x => x.id === s.dataset.status);
+  if (l) { l.status = s.value; saveLeads(); renderLeads(); }
+});
+$('#lead-filters').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  leadView = b.dataset.view;
+  $$('#lead-filters button').forEach(x => x.classList.toggle('on', x === b));
+  renderLeads();
+});
+$('#btn-add-lead').onclick = () => {
+  const name = prompt('客户姓名'); if (!name) return;
+  const phone = prompt('联系手机号'); if (!phone) return;
+  const route = prompt('意向线路名称', routes[0]?.name || '') || '';
+  const count = Number(prompt('出行人数', '1')) || 1;
+  const date = prompt('计划出行日期（如 2026-04-01）', '') || '';
+  const note = prompt('备注信息（老人 / 基础病 / 特殊需求）', '') || '';
+  leads.unshift({ id: 'l' + Date.now(), name, phone, route, count, date, note, status: '有意向' });
+  saveLeads(); renderLeads();
+};
+$('#btn-export').onclick = () => {
+  const head = ['客户姓名', '联系手机号', '意向线路名称', '出行人数', '计划出行日期', '备注信息', '业务状态'];
+  const rows = leads.map(l => [l.name, l.phone, l.route, l.count, l.date, l.note, l.status]);
+  const csv = '\ufeff' + [head, ...rows].map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = '客户意向登记表.csv'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+
+/* =========================================================================
+   9. 设置弹窗 / 页签 / 初始化
+   ========================================================================= */
+$('#btn-settings').onclick = () => {
+  $('#cfg-url').value = cfg.url || ''; $('#cfg-key').value = cfg.key || ''; $('#cfg-model').value = cfg.model || '';
+  $('#mask-settings').classList.add('on');
+};
+$('#cfg-cancel').onclick = () => $('#mask-settings').classList.remove('on');
+$('#cfg-save').onclick = () => {
+  cfg = { url: $('#cfg-url').value.trim(), key: $('#cfg-key').value.trim(), model: $('#cfg-model').value.trim() };
+  saveCfg();
+  $('#engine-label').textContent = (cfg.key && cfg.url && cfg.model) ? `大模型 · ${cfg.model}` : '本地规则引擎';
+  $('#mask-settings').classList.remove('on');
+};
+
+function switchTab(name) {
+  $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  $$('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + name));
+}
+$$('.tabs button').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+$('#btn-to-leads').onclick = () => switchTab('leads');
+$('#btn-reset-slots').onclick = () => { collector = { name: '', phone: '', route: '', count: '', date: '' }; autoSaved = false; renderSlots(); };
+
+$('#send').onclick = send;
+$('#inp').addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+$('#elder').addEventListener('change', () => { if ($('#elder').checked) pushMsg('bot', '已开启长者模式，我的回答会更简短，并自动语音播报。'); });
+
+const QUICK = ['三峡五日游多少钱？', '云南昆大丽6日游的团期？', '70岁老人能报名三峡吗？', '华东五市7日游还有吗？', '退费怎么算？', '我想报名张家界', '客服电话是多少？'];
+$('#chips').innerHTML = QUICK.map(q => `<button class="chip">${esc(q)}</button>`).join('');
+$('#chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  $('#inp').value = b.textContent; send();
+});
+
+$('#rules-list').innerHTML = RULES.map(r => `<li style="margin-bottom:8px">${esc(r)}</li>`).join('');
+$('#tpl-box').textContent = TEMPLATE;
+
+// 初始化
+renderRoutes(); renderLeads(); renderSlots();
+if (cfg.key && cfg.url && cfg.model) $('#engine-label').textContent = `大模型 · ${cfg.model}`;
+pushMsg('bot', `您好，我是云途旅行社的智能客服<b>小途</b> 🧭\n目前在售线路：${routes.filter(r => r.status === '在售').map(r => `<b>${esc(r.name)}</b>`).join('、')}。\n您可以直接问我线路的<b>价格、团期、年龄限制、住宿、退改规则</b>，或者回复线路名称看完整行程。\n\n请问您想了解哪条线路呢？`);
+</script>
+</body>
+</html>
